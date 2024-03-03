@@ -1,44 +1,43 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf} from 'obsidian';
+import { WorkspaceLeaf, Plugin } from 'obsidian';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
-import { StateManager, StartTaskModal, TaskListView } from './classes';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import { TaskManager, StartTaskModal, TaskListView } from './classes';
+
+import type { Task } from './classes';
 
 dayjs.extend(duration)
+dayjs.extend(relativeTime)
 
-interface TimeTrackerSettings { 
-  updateInterval: number;
+export interface TimeTrackerSettings { 
+  statusBarUpdateInterval: number;
   showInStatusBar: boolean;
-  statusBarFormat: string;
   taskListFormat: string;
   showSidebarOnTimerStart: boolean;
 }
 
 const DEFAULT_SETTINGS: TimeTrackerSettings = {
-  updateInterval: 1,
+  statusBarUpdateInterval: 15,
   showInStatusBar: true,
-  statusBarFormat: 'HH:mm:ss',
   taskListFormat: 'HH:mm:ss',
   showSidebarOnTimerStart: true,
 }
 
 export default class TimeTracker extends Plugin {
-	settings: TimeTrackerSettings;
-  stateManager: StateManager;
-  statusBar: HTMLElement | null;
+	settings: TimeTrackerSettings = DEFAULT_SETTINGS;
+  taskManager: TaskManager = new TaskManager();
+  statusBar?: HTMLElement;
 
 	async onload() {
 		await this.loadSettings();
-    this.stateManager = new StateManager();
 
     const onTaskStart = (name: string) => {
-      this.stateManager.startTask(name)
-      this.updateData();
+      this.taskManager.startTask(name)
       this.activateTaskListView();
-      new Notice(`Timer started for ${name}`);
     }
 
     const onTimerStop = () => {
-      this.stateManager.stopActiveTask();
+      this.taskManager.stopActiveTask();
     }
 
 		const startTaskModal = new StartTaskModal(
@@ -59,25 +58,17 @@ export default class TimeTracker extends Plugin {
 			id: 'stop-active-task-timer',
 			name: 'Stop active task timer',
 			callback: () => {
-        const activeTaskName = this.stateManager.stopActiveTask()
-        if(activeTaskName) {
-          new Notice(`Timer stopped for ${activeTaskName}`);
-        }
-        this.updateData();
+        const activeTaskName = this.taskManager.stopActiveTask()
       },
 		});
 
-    this.statusBar = this.settings.showInStatusBar ?
-      this.addStatusBarItem() : null;
 
     this.registerView(
       TaskListView.identifier,
-      (leaf) => new TaskListView(leaf, this),
+      (leaf) => new TaskListView(leaf, this.taskManager, this.settings),
     );
 
-    this.registerInterval(window.setInterval(() => {
-      this.updateData();
-    }, this.settings.updateInterval * 1000));
+    if(this.settings.showInStatusBar) this.startStatusBar();
 	}
 
 	onunload() {
@@ -92,25 +83,35 @@ export default class TimeTracker extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-  updateData() {
-    const activeTask = this.stateManager.getActiveTaskDuration();
-    if(activeTask) {
-      const duration = dayjs.duration( 
-        activeTask.duration
-      );
+  startStatusBar() {
+    const statusBar = this.addStatusBarItem();
 
-      if(this.statusBar) {
-        this.statusBar.setText(`${activeTask.name}: ${duration.format(this.settings.statusBarFormat)}`);
-      }
-    } else {
-      if(this.statusBar) this.statusBar.setText('No active task');
-    }
+    let interval: number | null = null;
+    this.taskManager.activeTask.subscribe(activeTask => {
 
-    this.app.workspace.getLeavesOfType(TaskListView.identifier).forEach((leaf) => {
-      if (leaf.view instanceof TaskListView) {
-        leaf.view.updateData();
+      if(!activeTask) {
+        statusBar.empty();
+        return;
       }
+
+      const update = () => {
+        statusBar.empty();
+
+        const duration = dayjs.duration(TaskManager.sumTaskIntervals(
+          activeTask
+        ));
+        statusBar.setText(`Working on ${activeTask.name} for ${duration.humanize()}`);
+      }
+      update();
+
+      if(interval) clearInterval(interval);
+      interval = this.registerInterval(window.setInterval(
+        update,
+        this.settings.statusBarUpdateInterval * 1000
+      ));
+
     });
+
   }
 
   async activateTaskListView() {

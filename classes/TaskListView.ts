@@ -1,18 +1,21 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
-import  dayjs from 'dayjs';
+import { TaskListView as Component } from '../svelte-components';
 
-import type TimeTracker from '../main';
+import type { TaskManager } from '../classes';
+import type { TimeTrackerSettings } from '../main';
 
 export class TaskListView extends ItemView {
-  icon = "timer";
   static identifier = "task-list-view"
+  taskManager: TaskManager;
+  settings: TimeTrackerSettings; 
 
-  timeTracker: TimeTracker;
-  ul: HTMLUListElement
+  component?: Component;
+  icon = "timer";
 
-  constructor(leaf: WorkspaceLeaf, timeTracker: TimeTracker) {
+  constructor(leaf: WorkspaceLeaf, taskManager: TaskManager, settings: TimeTrackerSettings) {
     super(leaf);
-    this.timeTracker = timeTracker;
+    this.taskManager = taskManager;
+    this.settings = settings;
   }
 
   getViewType() {
@@ -24,24 +27,16 @@ export class TaskListView extends ItemView {
   }
 
   async onOpen() {
-    const container = this.containerEl.children[1];
-    container.empty();
-    container.createEl("h4", { text: "Task times" });
-    this.ul = container.createEl("ul", { attr: { style: "padding: 0; margin: 0" } });
-  }
-
-  updateData() {
-    this.ul.empty();
-    this.timeTracker.stateManager.forEachTask((task) => {
-      this.ul
-        .createEl("li", { text: task.name, cls: "task-list-task-li" })
-        .createEl("span", { text: dayjs.duration(
-          this.timeTracker.stateManager.sumTaskIntervals(task)
-        ).format(this.timeTracker.settings.taskListFormat)});
+    this.component = new Component({
+      target: this.contentEl,
+      props: {
+        taskManager: this.taskManager,
+        settings: this.settings,
+      }      
     });
   }
 
   async onClose() {
-    // Nothing to clean up.
+    this.component?.$destroy();
   }
 } 

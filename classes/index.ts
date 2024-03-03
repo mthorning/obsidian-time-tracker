@@ -1,3 +1,3 @@
-export * from './StateManager';
+export * from './TaskManager';
 export * from './StartTaskModal';
 export * from './TaskListView';

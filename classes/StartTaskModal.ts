@@ -24,7 +24,7 @@ export class StartTaskModal extends Modal {
       .setName("Name")
 
     const buttons = new Setting(contentEl);
-    if(this.timeTracker.stateManager.hasActiveTask()) {
+    if(this.timeTracker.taskManager.hasActiveTask()) {
       buttons.addExtraButton((btn) => 
         btn
           .onClick(this.onStopTimer) 
