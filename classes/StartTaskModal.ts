@@ -21,7 +21,7 @@ export class StartTaskModal extends Modal {
     contentEl.createEl("h1", { text: "Start task" });
 
     const nameInput = new Setting(contentEl)
-      .setName("Name")
+      .setName("Name:")
 
     const buttons = new Setting(contentEl);
     if(this.timeTracker.taskManager.hasActiveTask()) {

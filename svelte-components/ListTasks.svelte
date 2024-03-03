@@ -2,9 +2,11 @@
   import { createEventDispatcher } from 'svelte';
   import dayjs from 'dayjs';
   import { TaskManager } from "../classes";
+  import type { TaskWithDuration } from "./EditTask.svelte";
+
   import type { TimeTrackerSettings} from "../main";
 
-	const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher<{ editTask: TaskWithDuration }>();
 
   export let taskManager: TaskManager;
   export let settings: TimeTrackerSettings;
@@ -12,7 +14,7 @@
   const tasks = taskManager.tasks;
   const activeTask = taskManager.activeTask;
 
-  let tasksWithTimes: Record<'name' | 'time', string>[] = [];
+  let tasksWithTimes: TaskWithDuration[] = [];
 
   let timerIntervalId: number | null = null;
   $: {
@@ -20,10 +22,9 @@
       window.clearInterval(timerIntervalId);
     }
     const update = () => tasksWithTimes = $tasks.map((task) => ({
-      name: task.name, 
-      time: dayjs
+      ...task,
+      duration: dayjs
         .duration(TaskManager.sumTaskIntervals(task))
-        .format(settings.taskListFormat)
     }));
     update();
     timerIntervalId = window.setInterval(update, 500)
@@ -39,7 +40,7 @@
       <li>
         <div class="main-li">
           <span class="name">{task.name}</span>
-          <span>{task.time}</span>
+          <span>{task.duration.format(settings.taskListFormat)}</span>
           {#if $activeTask?.name === task.name}
             <button on:click={() => taskManager.stopActiveTask()}>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stop-icon lucide lucide-square">
@@ -57,7 +58,7 @@
         {#if $activeTask?.name !== task.name}
           <div class="footer-buttons">
             <button on:click={() => taskManager.resetTaskTimes(task.name)}>Reset</button>
-            <button on:click={() => dispatch('edit-mode')}>Edit</button>
+            <button on:click={() => dispatch('editTask', task )}>Edit</button>
           </div>
         {/if}
       </li>
