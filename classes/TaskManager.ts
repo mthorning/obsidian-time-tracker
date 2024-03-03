@@ -9,17 +9,26 @@ export class TaskManager {
   activeTask = writable<Task | null>(null);
   tasks = writable<Task[]>([]);
 
+  static sumTaskIntervals(task: Task | null): number {
+    if(!task) return 0;
+    return task.intervals.reduce((acc, [start, end]) => {
+      return acc + ((end ?? Date.now()) - start);
+    }, 0)
+  }
+
   startTask(name: string) {
     const now = Date.now();
 
     let task: Task | undefined;
     this.tasks.update((tasks) => {
+      let newTasks: Task[] = tasks;
+
       task = tasks.find(t => t.name === name);
       if(task === get(this.activeTask)) return tasks;
 
       if(!task) {
         task = {name,  intervals: []};
-        tasks.push(task);
+        newTasks = [task, ...tasks];
       }
 
       if(this.activeTask) {
@@ -29,7 +38,7 @@ export class TaskManager {
       task.intervals.push([now, null]);
       this.activeTask.set(task);
 
-      return tasks;
+      return newTasks;
     });
   }
 
@@ -59,14 +68,13 @@ export class TaskManager {
     return get(this.activeTask);
   }
 
-  static sumTaskIntervals(task: Task | null): number {
-    if(!task) return 0;
-    return task.intervals.reduce((acc, [start, end]) => {
-      return acc + ((end ?? Date.now()) - start);
-    }, 0)
-  }
-
   hasActiveTask() {
     return !!get(this.activeTask);
+  }
+
+  resetTaskTimes(name: string) {
+    this.tasks.update(tasks => 
+      tasks.map(task => task.name === name ? {...task, intervals: []} : task)
+    )
   }
 }
