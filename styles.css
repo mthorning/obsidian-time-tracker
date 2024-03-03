@@ -1,0 +1,9 @@
+.task-list-task-li {
+  list-style-type: none;
+  margin-bottom: var(--size-4-4);
+  border: var(--border-width) solid var(--background-modifier-border);
+  padding: var(--size-4-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
