@@ -3,7 +3,7 @@ import { App, Modal, Setting } from "obsidian";
 import type  TimeTracker  from "../main";
 
 export class StartTaskModal extends Modal {
-  result: string;
+  result: string = '';
   onSubmit: (result: string) => void;
   onStopTimer: () => void;
   timeTracker: TimeTracker;

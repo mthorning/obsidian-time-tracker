@@ -1,5 +1,6 @@
 <script context="module" lang="ts">
   import dayjs from "dayjs";
+  import { createEventDispatcher } from 'svelte';
 
   import type { Task } from "../classes";
   import type { TimeTrackerSettings } from "../main";
@@ -12,6 +13,8 @@
 <script lang="ts">
   export let settings: TimeTrackerSettings;
   export let task: TaskWithDuration;
+
+	const dispatch = createEventDispatcher();
 
   function formatDuration(duration: ReturnType<typeof dayjs.duration>) {
     const days = Math.floor(duration.asDays());
@@ -34,6 +37,7 @@
 </script>
 
 <div>
+  <button on:click={() => dispatch('closeEdit')}>Back</button>
   <h1>Edit task</h1>
   <form>
     <label for="task-name"

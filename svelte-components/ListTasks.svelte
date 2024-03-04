@@ -59,6 +59,7 @@
           <div class="footer-buttons">
             <button on:click={() => taskManager.resetTaskTimes(task.name)}>Reset</button>
             <button on:click={() => dispatch('editTask', task )}>Edit</button>
+            <button on:click={() => taskManager.deleteTask(task.name)}>Delete</button>
           </div>
         {/if}
       </li>

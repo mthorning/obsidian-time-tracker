@@ -77,4 +77,8 @@ export class TaskManager {
       tasks.map(task => task.name === name ? {...task, intervals: []} : task)
     )
   }
+
+  deleteTask(name: string) {
+    this.tasks.update(tasks => tasks.filter(task => task.name !== name));
+  }
 }
