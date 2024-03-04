@@ -8,14 +8,15 @@ export type Task = {
   intervals: [number, number | null][];
 }
 
-const LOCAL_STORAGE_KEYS = {
-  ACTIVE_TASK: 'obsidian-time-tracker-activeTask',
-  TASKS: 'obsidian-time-tracker-tasks'
-} as const;
-
+type Store = {
+  activeTask: number;
+  tasks: Task[];
+}
 export class TaskManager {
-  activeTask: Writable<number> = writable(-1);
-  tasks: Writable<Task[]> = writable([]);
+  store: Writable<Store> = writable({
+    activeTask: -1,
+    tasks: [],
+  });
   timeTracker: TimeTracker;
 
   constructor(timeTracker: TimeTracker) {
@@ -25,18 +26,14 @@ export class TaskManager {
 
   async loadDataAndWatchForChanges() {
     const data = await this.timeTracker.loadData();
-    this.activeTask.set(data.activeTask ?? -1);
-    this.tasks.set(data.tasks ?? []);
-
-    this.activeTask.subscribe((activeTask) => {
-      console.log('activeTask', activeTask);
-      this.timeTracker.saveData({...this.timeTracker.settings, activeTask });
+    this.store.set({
+      activeTask: data.activeTask ?? -1,
+      tasks: data.tasks ?? [],
     });
 
-    this.tasks.subscribe((tasks) => {
-      this.timeTracker.saveData({...this.timeTracker.settings, tasks });
+    this.store.subscribe(({ tasks, activeTask }) => {
+      this.timeTracker.saveData({...this.timeTracker.settings, tasks, activeTask });
     });
-
   }
 
   static sumTaskIntervals(task: Task | null): number {
@@ -49,69 +46,90 @@ export class TaskManager {
   startTask(name: string) {
     const now = Date.now();
 
-    let task: Task | undefined;
-    this.tasks.update((tasks) => {
-      let newTasks: Task[] = tasks;
+    this.store.update((storeData) => {
+      const { tasks: prevTasks, activeTask: prevActiveTask } = storeData;
+      const activeTask = prevActiveTask;
+      let tasks = [...prevTasks];
+      let taskIdx = tasks.findIndex(t => t.name === name);
 
-      const activeTask = get(this.activeTask);
-      task = tasks.find(t => t.name === name);
-      if(task === tasks[activeTask]) return tasks;
-
-      if(!task) {
-        task = {name,  intervals: []};
-        newTasks = [task, ...tasks];
+      if(taskIdx === -1) {
+        const newTask = {name,  intervals: []};
+        tasks = [newTask, ...tasks];
+        taskIdx = 0;
       }
+
+      if(taskIdx === activeTask) return storeData;
 
       if(activeTask !== -1) {
         this.recordActiveTaskEndTime(now);
       }
 
-      task.intervals.push([now, null]);
-      this.activeTask.set(task);
+      tasks[taskIdx].intervals.push([now, null]);
 
-      return newTasks;
+      return { ...storeData, tasks, activeTask: taskIdx };
     });
   }
 
   recordActiveTaskEndTime(now: number = Date.now()) {
-    this.activeTask.update(activeTask => {
-      if(!activeTask) return activeTask;
+    this.store.update((storeData) => {
+      const { tasks, activeTask } = storeData;
+      const newTasks = [...tasks];
+      if(activeTask === -1) return storeData;
 
-      activeTask.intervals.forEach(interval => {
+      tasks[activeTask].intervals.forEach(interval => {
         if(!interval[1]) interval[1] = now;
       });
-      return activeTask;
+      return { ...storeData, tasks: newTasks};
     });
   }
 
   stopActiveTask(): string | undefined {
-    let name = get(this.activeTask)?.name;
+    let name: string | undefined;
 
-    this.activeTask.update(activeTask => {
-      if(!activeTask) return null;
+    this.store.update(storeData => {
+      const { tasks, activeTask } = storeData;
+      if(activeTask === -1) return storeData;
       this.recordActiveTaskEndTime();
-      name = activeTask.name;
-      return null;
+      name = tasks[activeTask].name;
+      return {...storeData, activeTask: -1};
     });
 
     return name;
   }
 
   getActiveTask(): Task | null {
-    return get(this.activeTask);
+    const { tasks, activeTask } = get(this.store);
+    return activeTask === -1 ? null : tasks[activeTask];
   }
 
   hasActiveTask() {
-    return !!get(this.activeTask);
+    return !!this.getActiveTask();
   }
 
   resetTaskTimes(name: string) {
-    this.tasks.update(tasks => 
-        tasks.map(task => task.name === name ? {...task, intervals: []} : task)
-    )
+    this.store.update(storeData => ({
+      ...storeData,
+      tasks: storeData.tasks.map(task => task.name === name ? {...task, intervals: []} : task)
+    }))
   }
 
   deleteTask(name: string) {
-    this.tasks.update(tasks => tasks.filter(task => task.name !== name));
+    this.store.update(storeData => ({
+      ...storeData,
+      tasks: storeData.tasks.filter(task => task.name !== name)
+    }));
+  }
+
+  updateTask(oldName: string, newTask: Partial<Task>) {
+    console.log(name, newTask);
+    this.store.update(storeData => {
+      const { tasks } = storeData;
+      const newTasks = [...tasks];
+
+      // probably want to check if the name is already in use
+      const idx = tasks.findIndex(task => task.name === oldName);
+      newTasks[idx] = {...tasks[idx], ...newTask};
+      return { ...storeData, tasks: newTasks };
+    });
   }
 }

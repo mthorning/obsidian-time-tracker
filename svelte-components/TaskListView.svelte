@@ -13,7 +13,7 @@
 
 <div>
   {#if taskToEdit}
-    <EditTasks {settings} task={taskToEdit} on:closeEdit={() => taskToEdit = null}/>
+    <EditTasks {taskManager} {settings} task={taskToEdit} on:closeEdit={() => taskToEdit = null}/>
   {:else}
     <ListTasks {taskManager} {settings} on:editTask={({ detail }) => taskToEdit = detail} />
   {/if}

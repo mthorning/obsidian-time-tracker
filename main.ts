@@ -85,7 +85,8 @@ export default class TimeTracker extends Plugin {
     const statusBar = this.addStatusBarItem();
 
     let interval: number | null = null;
-    this.taskManager.activeTask.subscribe(activeTask => {
+    this.taskManager.store.subscribe(({activeTask: idx, tasks }) => {
+      const activeTask = tasks[idx];
 
       if(!activeTask) {
         statusBar.empty();
