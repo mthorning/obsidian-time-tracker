@@ -8,6 +8,11 @@ export type Task = {
   intervals: [number, number | null][];
 }
 
+const LOCAL_STORAGE_KEYS = {
+  ACTIVE_TASK: 'obsidian-time-tracker-activeTask',
+  TASKS: 'obsidian-time-tracker-tasks'
+} as const;
+
 export class TaskManager {
   activeTask: Writable<number> = writable(-1);
   tasks: Writable<Task[]> = writable([]);
@@ -72,7 +77,9 @@ export class TaskManager {
     this.activeTask.update(activeTask => {
       if(!activeTask) return activeTask;
 
-      activeTask.intervals[activeTask.intervals.length - 1][1] = now;
+      activeTask.intervals.forEach(interval => {
+        if(!interval[1]) interval[1] = now;
+      });
       return activeTask;
     });
   }
@@ -100,7 +107,7 @@ export class TaskManager {
 
   resetTaskTimes(name: string) {
     this.tasks.update(tasks => 
-      tasks.map(task => task.name === name ? {...task, intervals: []} : task)
+        tasks.map(task => task.name === name ? {...task, intervals: []} : task)
     )
   }
 
