@@ -9,7 +9,7 @@ export type Task = {
 }
 
 export class TaskManager {
-  activeTask: Writable<Task | null> = writable(null);
+  activeTask: Writable<number> = writable(-1);
   tasks: Writable<Task[]> = writable([]);
   timeTracker: TimeTracker;
 
@@ -20,7 +20,7 @@ export class TaskManager {
 
   async loadDataAndWatchForChanges() {
     const data = await this.timeTracker.loadData();
-    this.activeTask.set(data.activeTask ?? null);
+    this.activeTask.set(data.activeTask ?? -1);
     this.tasks.set(data.tasks ?? []);
 
     this.activeTask.subscribe((activeTask) => {
@@ -48,15 +48,16 @@ export class TaskManager {
     this.tasks.update((tasks) => {
       let newTasks: Task[] = tasks;
 
+      const activeTask = get(this.activeTask);
       task = tasks.find(t => t.name === name);
-      if(task === get(this.activeTask)) return tasks;
+      if(task === tasks[activeTask]) return tasks;
 
       if(!task) {
         task = {name,  intervals: []};
         newTasks = [task, ...tasks];
       }
 
-      if(this.activeTask) {
+      if(activeTask !== -1) {
         this.recordActiveTaskEndTime(now);
       }
 
