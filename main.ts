@@ -4,8 +4,6 @@ import duration from 'dayjs/plugin/duration';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { TaskManager, StartTaskModal, TaskListView } from './classes';
 
-import type { Task } from './classes';
-
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
 
@@ -25,7 +23,7 @@ const DEFAULT_SETTINGS: TimeTrackerSettings = {
 
 export default class TimeTracker extends Plugin {
 	settings: TimeTrackerSettings = DEFAULT_SETTINGS;
-  taskManager: TaskManager = new TaskManager();
+  taskManager: TaskManager = new TaskManager(this);
   statusBar?: HTMLElement;
 
 	async onload() {
@@ -58,7 +56,7 @@ export default class TimeTracker extends Plugin {
 			id: 'stop-active-task-timer',
 			name: 'Stop active task timer',
 			callback: () => {
-        const activeTaskName = this.taskManager.stopActiveTask()
+        this.taskManager.stopActiveTask()
       },
 		});
 

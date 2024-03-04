@@ -1,13 +1,38 @@
 import { writable, get } from "svelte/store";
 
+import type { Writable } from "svelte/store";
+import type TimeTracker  from "../main";
+
 export type Task = {
   name: string;
   intervals: [number, number | null][];
 }
 
 export class TaskManager {
-  activeTask = writable<Task | null>(null);
-  tasks = writable<Task[]>([]);
+  activeTask: Writable<Task | null> = writable(null);
+  tasks: Writable<Task[]> = writable([]);
+  timeTracker: TimeTracker;
+
+  constructor(timeTracker: TimeTracker) {
+    this.timeTracker = timeTracker;
+    this.loadDataAndWatchForChanges();
+  }
+
+  async loadDataAndWatchForChanges() {
+    const data = await this.timeTracker.loadData();
+    this.activeTask.set(data.activeTask ?? null);
+    this.tasks.set(data.tasks ?? []);
+
+    this.activeTask.subscribe((activeTask) => {
+      console.log('activeTask', activeTask);
+      this.timeTracker.saveData({...this.timeTracker.settings, activeTask });
+    });
+
+    this.tasks.subscribe((tasks) => {
+      this.timeTracker.saveData({...this.timeTracker.settings, tasks });
+    });
+
+  }
 
   static sumTaskIntervals(task: Task | null): number {
     if(!task) return 0;
