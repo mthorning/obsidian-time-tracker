@@ -130,7 +130,6 @@ export class TaskManager {
   }
 
   updateTask(oldName: string, newTask: Partial<Task>) {
-    console.log(name, newTask);
     this.store.update(storeData => {
       const { tasks } = storeData;
       const newTasks = [...tasks];

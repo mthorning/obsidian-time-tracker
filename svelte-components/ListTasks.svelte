@@ -91,10 +91,10 @@
         </div>
         {#if $store.tasks[$store.activeTask]?.name !== task.name}
           <div class="footer-buttons">
+            <button on:click={() => dispatch("editTask", task)}>Edit</button>
             <button on:click={() => taskManager.resetTaskTimes(task.name)}
               >Reset</button
             >
-            <button on:click={() => dispatch("editTask", task)}>Edit</button>
             <button on:click={() => taskManager.deleteTask(task.name)}
               >Delete</button
             >

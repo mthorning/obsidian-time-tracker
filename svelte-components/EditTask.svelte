@@ -33,7 +33,7 @@
 
   function onSubmit() {
     taskManager.updateTask(originalName, {
-      ...task,
+      name: task.name,
       intervals: intervalsWithStringVals.map((interval) =>
         interval.map((val) => dayjs(val).valueOf()) as [number, number]
       ),
@@ -75,8 +75,8 @@
     <p>Previous duration: {taskManager.formatDuration(task.duration)}</p>
     <p>New duration: {taskManager.formatDuration(newDuration)}</p>
     <div class="buttons">
-      <button type="submit">Cancel</button>
-      <button on:click={() => dispatch("closeEdit")}>Save</button>
+      <button on:click={() => dispatch("closeEdit")}>Cancel</button>
+      <button type="submit">Save</button>
     </div>
   </form>
 </div>
