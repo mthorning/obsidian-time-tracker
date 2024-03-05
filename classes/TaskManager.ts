@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import dayjs from "dayjs";
 
 import type { Writable } from "svelte/store";
 import type TimeTracker  from "../main";
@@ -41,6 +42,14 @@ export class TaskManager {
     return task.intervals.reduce((acc, [start, end]) => {
       return acc + ((end ?? Date.now()) - start);
     }, 0)
+  }
+
+  formatDuration(duration: ReturnType<typeof dayjs.duration>): string {
+    const days = Math.floor(duration.asDays());
+    if (days < 1) return duration.format(this.timeTracker.settings.taskListFormat);
+    return `(+${days} day${days === 1 ? "" : "s"}) ${duration
+      .subtract(days, "d")
+      .format(this.timeTracker.settings.taskListFormat)}`;
   }
 
   startTask(name: string) {

@@ -11,21 +11,12 @@
 </script>
 
 <script lang="ts">
-  export let settings: TimeTrackerSettings;
   export let task: TaskWithDuration;
   export let taskManager: TaskManager;
 
   const originalName = task.name;
 
   const dispatch = createEventDispatcher();
-
-  function formatDuration(duration: ReturnType<typeof dayjs.duration>) {
-    const days = Math.floor(duration.asDays());
-    if (days < 1) return duration.format(settings.taskListFormat);
-    return `(+${days} day${days === 1 ? "" : "s"}) ${duration
-      .subtract(days, "d")
-      .format(settings.taskListFormat)}`;
-  }
 
   const intervalsWithStringVals = task.intervals.map((interval) =>
     interval.map((val) => dayjs(val).format("YYYY-MM-DDTHH:mm:ss"))
@@ -41,7 +32,12 @@
   );
 
   function onSubmit() {
-    taskManager.updateTask(originalName, task);
+    taskManager.updateTask(originalName, {
+      ...task,
+      intervals: intervalsWithStringVals.map((interval) =>
+        interval.map((val) => dayjs(val).valueOf()) as [number, number]
+      ),
+    });
     dispatch("closeEdit");
   }
 </script>
@@ -73,12 +69,15 @@
           bind:value={intervalsWithStringVals[i][1]}
         />
       </label>
-      <p>Duration: {formatDuration(intervalDurations[i])}</p>
+      <p>Duration: {taskManager.formatDuration(intervalDurations[i])}</p>
       <hr />
     {/each}
-    <p>Previous duration: {formatDuration(task.duration)}</p>
-    <p>New duration: {formatDuration(newDuration)}</p>
-    <button type="submit">Save</button>
+    <p>Previous duration: {taskManager.formatDuration(task.duration)}</p>
+    <p>New duration: {taskManager.formatDuration(newDuration)}</p>
+    <div class="buttons">
+      <button on:click={() => dispatch("closeEdit")}>Save</button>
+      <button type="submit">Cancel</button>
+    </div>
   </form>
 </div>
 
@@ -95,6 +94,14 @@
   }
   input {
     margin-left: var(--size-4-1);
+  }
+  .buttons {
+    display: flex;
+    gap: var(--size-4-2);
+    justify-content: flex-end;
+  }
+  button {
+    border-radius: var(--button-radius);
   }
   button[type="submit"] {
     float: right;

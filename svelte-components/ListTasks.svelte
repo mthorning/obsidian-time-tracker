@@ -9,7 +9,6 @@
   const dispatch = createEventDispatcher<{ editTask: TaskWithDuration }>();
 
   export let taskManager: TaskManager;
-  export let settings: TimeTrackerSettings;
 
   const store = taskManager.store;
 
@@ -53,7 +52,7 @@
       <li>
         <div class="main-li">
           <span class="name">{task.name}</span>
-          <span>{task.duration.format(settings.taskListFormat)}</span>
+          <span>{taskManager.formatDuration(task.duration)}</span>
           {#if $store.tasks[$store.activeTask]?.name === task.name}
             <button on:click={() => taskManager.stopActiveTask()}>
               <svg
