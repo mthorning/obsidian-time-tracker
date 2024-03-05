@@ -7,7 +7,6 @@
   import type { TimeTrackerSettings} from "../main";
 
   export let taskManager: TaskManager;
-  export let settings: TimeTrackerSettings;
   let taskToEdit:  TaskWithDuration | null = null;
 </script>
 

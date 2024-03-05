@@ -31,7 +31,6 @@ export class TaskListView extends ItemView {
       target: this.contentEl,
       props: {
         taskManager: this.taskManager,
-        settings: this.settings,
       }      
     });
   }
