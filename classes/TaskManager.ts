@@ -9,12 +9,12 @@ export type Task = {
   intervals: [number, number | null][];
 }
 
-type Store = {
+type StoreData = {
   activeTask: number;
   tasks: Task[];
 }
 export class TaskManager {
-  store: Writable<Store> = writable({
+  store: Writable<StoreData> = writable({
     activeTask: -1,
     tasks: [],
   });
@@ -70,7 +70,7 @@ export class TaskManager {
       if(taskIdx === activeTask) return storeData;
 
       if(activeTask !== -1) {
-        this.recordActiveTaskEndTime(now);
+        tasks = this.recordActiveTaskEndTime({ tasks, activeTask }, now).tasks;
       }
 
       tasks[taskIdx].intervals.push([now, null]);
@@ -79,8 +79,7 @@ export class TaskManager {
     });
   }
 
-  recordActiveTaskEndTime(now: number = Date.now()) {
-    this.store.update((storeData) => {
+  recordActiveTaskEndTime( storeData: StoreData, now: number = Date.now()): StoreData  {
       const { tasks, activeTask } = storeData;
       const newTasks = [...tasks];
       if(activeTask === -1) return storeData;
@@ -89,17 +88,18 @@ export class TaskManager {
         if(!interval[1]) interval[1] = now;
       });
       return { ...storeData, tasks: newTasks};
-    });
   }
 
   stopActiveTask(): string | undefined {
     let name: string | undefined;
 
     this.store.update(storeData => {
-      const { tasks, activeTask } = storeData;
+      const { activeTask } = storeData;
       if(activeTask === -1) return storeData;
-      this.recordActiveTaskEndTime();
+
+      const { tasks } = this.recordActiveTaskEndTime(storeData);
       name = tasks[activeTask].name;
+
       return {...storeData, activeTask: -1};
     });
 
