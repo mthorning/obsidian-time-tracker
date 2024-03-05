@@ -3,8 +3,7 @@
   import dayjs from "dayjs";
   import { TaskManager } from "../classes";
   import type { TaskWithDuration } from "./EditTask.svelte";
-
-  import type { TimeTrackerSettings } from "../main";
+  import Icon from "./Icon.svelte";
 
   const dispatch = createEventDispatcher<{ editTask: TaskWithDuration }>();
 
@@ -54,38 +53,12 @@
           <span class="name">{task.name}</span>
           <span>{taskManager.formatDuration(task.duration)}</span>
           {#if $store.tasks[$store.activeTask]?.name === task.name}
-            <button on:click={() => taskManager.stopActiveTask()}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="stop-icon lucide lucide-square"
-              >
-                <rect width="18" height="18" x="3" y="3" rx="2" />
-              </svg>
+            <button on:click={() => taskManager.stopActiveTask()} class="stop-button">
+              <Icon icon="square"/>
             </button>
           {:else}
-            <button on:click={() => taskManager.startTask(task.name)}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="start-icon lucide lucide-play"
-              >
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
+            <button on:click={() => taskManager.startTask(task.name)} class="start-button">
+              <Icon icon="play"/>
             </button>
           {/if}
         </div>
@@ -121,6 +94,7 @@
 
   .main-li {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--size-4-2);
     justify-content: space-between;
     align-items: center;
@@ -130,11 +104,12 @@
   }
   .name {
     flex-grow: 1;
+    word-break: break-word;
   }
-  .stop-icon {
+  .stop-button :global(svg) {
     stroke: var(--text-error);
   }
-  .start-icon {
+  .start-button :global(svg) {
     stroke: var(--text-success);
   }
   .footer-buttons {

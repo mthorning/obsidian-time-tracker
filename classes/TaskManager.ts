@@ -28,8 +28,8 @@ export class TaskManager {
   async loadDataAndWatchForChanges() {
     const data = await this.timeTracker.loadData();
     this.store.set({
-      activeTask: data.activeTask ?? -1,
-      tasks: data.tasks ?? [],
+      activeTask: data?.activeTask ?? -1,
+      tasks: data?.tasks ?? [],
     });
 
     this.store.subscribe(({ tasks, activeTask }) => {
@@ -61,13 +61,14 @@ export class TaskManager {
       let tasks = [...prevTasks];
       let taskIdx = tasks.findIndex(t => t.name === name);
 
+      if(activeTask !== -1 && taskIdx === activeTask) return storeData;
+
+
       if(taskIdx === -1) {
         const newTask = {name,  intervals: []};
         tasks = [newTask, ...tasks];
         taskIdx = 0;
       }
-
-      if(taskIdx === activeTask) return storeData;
 
       if(activeTask !== -1) {
         tasks = this.recordActiveTaskEndTime({ tasks, activeTask }, now).tasks;
@@ -134,7 +135,6 @@ export class TaskManager {
       const { tasks } = storeData;
       const newTasks = [...tasks];
 
-      // probably want to check if the name is already in use
       const idx = tasks.findIndex(task => task.name === oldName);
       newTasks[idx] = {...tasks[idx], ...newTask};
       return { ...storeData, tasks: newTasks };
