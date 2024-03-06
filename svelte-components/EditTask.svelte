@@ -31,6 +31,11 @@
     dayjs.duration(0),
   );
 
+  $: showDurationDiff =
+    newDuration &&
+    Math.round(task.duration.as("seconds")) !==
+      Math.round(newDuration.as("seconds"));
+
   function onSubmit() {
     taskManager.updateTask(originalName, {
       name: task.name,
@@ -45,7 +50,10 @@
   function addInterval() {
     intervalsWithStringVals = [
       ...intervalsWithStringVals,
-      [dayjs().format("YYYY-MM-DDTHH:mm:ss"), dayjs().format("YYYY-MM-DDTHH:mm:ss")],
+      [
+        dayjs().format("YYYY-MM-DDTHH:mm:ss"),
+        dayjs().format("YYYY-MM-DDTHH:mm:ss"),
+      ],
     ];
   }
   function deleteInterval(i: number) {
@@ -96,8 +104,12 @@
     <div class="add-button">
       <button on:click={addInterval}>Add</button>
     </div>
-    <p>Previous duration: {taskManager.formatDuration(task.duration)}</p>
-    <p>New duration: {taskManager.formatDuration(newDuration)}</p>
+    {#if showDurationDiff}
+      <p>Previous duration: {taskManager.formatDuration(task.duration)}</p>
+      <p>New duration: {taskManager.formatDuration(newDuration)}</p>
+    {:else}
+      <p>Duration: {taskManager.formatDuration(task.duration)}</p>
+    {/if}
     <div class="buttons">
       <button type="button" on:click={() => dispatch("closeEdit")}
         >Cancel</button
