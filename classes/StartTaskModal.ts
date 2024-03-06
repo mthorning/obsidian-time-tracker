@@ -21,7 +21,16 @@ export class StartTaskModal extends Modal {
     contentEl.createEl("h1", { text: "Start task" });
 
     const nameInput = new Setting(contentEl)
-      .setName("Name:")
+      .setName("Name:");
+
+    nameInput.settingEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        if(this.result) {
+          this.onSubmit(this.result);
+          this.close();
+        }
+      }
+    });
 
     const buttons = new Setting(contentEl);
     if(this.timeTracker.taskManager.hasActiveTask()) {
@@ -40,13 +49,14 @@ export class StartTaskModal extends Modal {
           this.close();
           this.onSubmit(this.result);
         })
-    )
+    );
 
     nameInput.addText((text) => 
       text.onChange((value) => {
         buttons.setDisabled(!value);
         this.result = value
       }));
+    
   }
 
   onClose() {
