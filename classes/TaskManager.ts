@@ -56,22 +56,19 @@ export class TaskManager {
     const now = Date.now();
 
     this.store.update((storeData) => {
-      const { tasks: prevTasks, activeTask: prevActiveTask } = storeData;
-      const activeTask = prevActiveTask;
+      const { tasks: prevTasks, activeTask } = storeData;
       let tasks = [...prevTasks];
       let taskIdx = tasks.findIndex(t => t.name === name);
 
-      if(activeTask !== -1 && taskIdx === activeTask) return storeData;
-
+      if(activeTask !== -1) {
+        if(taskIdx === activeTask) return storeData;
+        tasks = this.recordActiveTaskEndTime({ tasks, activeTask }, now).tasks;
+      } 
 
       if(taskIdx === -1) {
         const newTask = {name,  intervals: []};
         tasks = [newTask, ...tasks];
         taskIdx = 0;
-      }
-
-      if(activeTask !== -1) {
-        tasks = this.recordActiveTaskEndTime({ tasks, activeTask }, now).tasks;
       }
 
       tasks[taskIdx].intervals.push([now, null]);
@@ -82,11 +79,12 @@ export class TaskManager {
 
   recordActiveTaskEndTime( storeData: StoreData, now: number = Date.now()): StoreData  {
       const { tasks, activeTask } = storeData;
-      const newTasks = [...tasks];
       if(activeTask === -1) return storeData;
+      const newTasks = [...tasks];
 
-      tasks[activeTask].intervals.forEach(interval => {
+      tasks[activeTask].intervals = tasks[activeTask].intervals.map(interval => {
         if(!interval[1]) interval[1] = now;
+        return interval;
       });
       return { ...storeData, tasks: newTasks};
   }

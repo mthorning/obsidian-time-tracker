@@ -59,7 +59,7 @@
 </script>
 
 <div>
-  <button on:click={() => dispatch("xcloseEdit")}>Back</button>
+  <button on:click={() => dispatch("closeEdit")}>Back</button>
   <form on:submit|preventDefault>
     <label for="name"
       >Name:
