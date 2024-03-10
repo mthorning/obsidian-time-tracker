@@ -37,7 +37,7 @@ export class TaskManager {
     });
   }
 
-  static sumTaskIntervals(task: Task | null): number {
+  static sumTaskIntervals(task?: { intervals: [number, number][] }): number {
     if(!task) return 0;
     return task.intervals.reduce((acc, [start, end]) => {
       return acc + ((end ?? Date.now()) - start);
@@ -45,11 +45,18 @@ export class TaskManager {
   }
 
   formatDuration(duration: ReturnType<typeof dayjs.duration>): string {
-    const days = Math.floor(duration.asDays());
-    if (days < 1) return duration.format(this.timeTracker.settings.taskListFormat);
-    return `(+${days} day${days === 1 ? "" : "s"}) ${duration
+    let days = duration.asDays();
+    let plusOrMinus = '+'
+    if(days < 0) plusOrMinus = '-';
+    days = Math.floor(Math.abs(days));
+
+    if(days >= 1) {
+    return `(${plusOrMinus}${days} day${days === 1 ? "" : "s"}) ${duration
       .subtract(days, "d")
       .format(this.timeTracker.settings.taskListFormat)}`;
+    }
+
+    return duration.format(this.timeTracker.settings.taskListFormat);
   }
 
   startTask(name: string) {

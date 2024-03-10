@@ -1,11 +1,14 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import { onDestroy, createEventDispatcher } from "svelte";
   import dayjs from "dayjs";
-  import { TaskManager } from "../classes";
-  import type { TaskWithDuration } from "./EditTask.svelte";
+  import { Clock, TaskManager } from "../classes";
   import Icon from "./Icon.svelte";
 
-  const dispatch = createEventDispatcher<{ editTask: TaskWithDuration }>();
+  import type { TaskWithDuration } from "./EditTask.svelte";
+
+  const dispatch = createEventDispatcher<{
+    editTask: { task: TaskWithDuration; isActive: boolean };
+  }>();
 
   export let taskManager: TaskManager;
 
@@ -17,29 +20,24 @@
     duration: dayjs.duration(TaskManager.sumTaskIntervals(task)),
   }));
 
-  let timerIntervalId: number | null = null;
-  function startClock() {
-    if (timerIntervalId) {
-      window.clearInterval(timerIntervalId);
-    }
+  const clock = new Clock(() => {
+    const task = tasksWithTimes[$store.activeTask];
+    task.duration = dayjs.duration(TaskManager.sumTaskIntervals(task));
 
-    const update = () => {
-      const task = tasksWithTimes[$store.activeTask];
-      task.duration = dayjs.duration(TaskManager.sumTaskIntervals(task));
-
-      tasksWithTimes = [...tasksWithTimes];
-    };
-
-    timerIntervalId = window.setInterval(update, 500);
-  }
+    tasksWithTimes = [...tasksWithTimes];
+  });
 
   $: {
     if ($store.activeTask !== -1) {
-      startClock();
-    } else if (timerIntervalId) {
-      window.clearInterval(timerIntervalId);
+      clock.start();
+    } else {
+      clock.stop();
     }
   }
+
+  onDestroy(() => {
+    clock.stop();
+  });
 </script>
 
 <div>
@@ -53,26 +51,38 @@
           <span class="name">{task.name}</span>
           <span>{taskManager.formatDuration(task.duration)}</span>
           {#if $store.tasks[$store.activeTask]?.name === task.name}
-            <button on:click={() => taskManager.stopActiveTask()} class="stop-button">
-              <Icon icon="square"/>
+            <button
+              on:click={() => taskManager.stopActiveTask()}
+              class="stop-button"
+            >
+              <Icon icon="square" />
             </button>
           {:else}
-            <button on:click={() => taskManager.startTask(task.name)} class="start-button">
-              <Icon icon="play"/>
+            <button
+              on:click={() => taskManager.startTask(task.name)}
+              class="start-button"
+            >
+              <Icon icon="play" />
             </button>
           {/if}
         </div>
-        {#if $store.tasks[$store.activeTask]?.name !== task.name}
-          <div class="footer-buttons">
-            <button on:click={() => dispatch("editTask", task)}>Edit</button>
+        <div class="footer-buttons">
+          <button
+            on:click={() =>
+              dispatch("editTask", {
+                task,
+                isActive: $store.tasks[$store.activeTask]?.name === task.name,
+              })}>Edit</button
+          >
+          {#if $store.tasks[$store.activeTask]?.name !== task.name}
             <button on:click={() => taskManager.resetTaskTimes(task.name)}
               >Reset</button
             >
             <button on:click={() => taskManager.deleteTask(task.name)}
               >Delete</button
             >
-          </div>
-        {/if}
+          {/if}
+        </div>
       </li>
     {/each}
   </ul>
