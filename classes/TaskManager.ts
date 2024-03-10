@@ -37,7 +37,7 @@ export class TaskManager {
     });
   }
 
-  static sumTaskIntervals(task?: { intervals: [number, number][] }): number {
+  static sumTaskIntervals(task: { intervals: [number, number | null][] }): number {
     if(!task) return 0;
     return task.intervals.reduce((acc, [start, end]) => {
       return acc + ((end ?? Date.now()) - start);

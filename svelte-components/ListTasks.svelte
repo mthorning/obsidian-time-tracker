@@ -11,6 +11,7 @@
   }>();
 
   export let taskManager: TaskManager;
+  export let startTask: () => void;
 
   const store = taskManager.store;
 
@@ -41,6 +42,9 @@
 </script>
 
 <div>
+  <div class="new-task-button">
+    <button on:click={() => startTask()}>Start task</button>
+  </div>
   {#if tasksWithTimes.length === 0}
     <p>No timers are running at the moment</p>
   {/if}
@@ -111,6 +115,11 @@
   }
   button {
     padding: var(--size-4-1);
+  }
+  .new-task-button {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--size-4-2);
   }
   .name {
     flex-grow: 1;

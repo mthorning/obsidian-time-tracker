@@ -8,14 +8,21 @@ export class TaskListView extends ItemView {
   static identifier = "task-list-view"
   taskManager: TaskManager;
   settings: TimeTrackerSettings; 
+  startTask: () => void;
 
   component?: Component;
   icon = "timer";
 
-  constructor(leaf: WorkspaceLeaf, taskManager: TaskManager, settings: TimeTrackerSettings) {
+  constructor(
+    leaf: WorkspaceLeaf,
+    taskManager: TaskManager,
+    settings: TimeTrackerSettings,
+    startTask: () => void,
+  ) {
     super(leaf);
     this.taskManager = taskManager;
     this.settings = settings;
+    this.startTask = startTask;
   }
 
   getViewType() {
@@ -31,6 +38,7 @@ export class TaskListView extends ItemView {
       target: this.contentEl,
       props: {
         taskManager: this.taskManager,
+        startTask: this.startTask,
       }      
     });
   }

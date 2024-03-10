@@ -6,6 +6,8 @@
   import type { TaskWithDuration } from "./EditTask.svelte";
 
   export let taskManager: TaskManager;
+  export let startTask: () => void;
+
   let taskToEdit: { task: TaskWithDuration; isActive: boolean } | null = null;
 </script>
 
@@ -19,6 +21,7 @@
   {:else}
     <ListTasks
       {taskManager}
+      {startTask}
       on:editTask={({ detail }) => (taskToEdit = detail)}
     />
   {/if}

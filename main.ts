@@ -63,7 +63,12 @@ export default class TimeTracker extends Plugin {
 
     this.registerView(
       TaskListView.identifier,
-      (leaf) => new TaskListView(leaf, this.taskManager, this.settings),
+      (leaf) => new TaskListView(
+        leaf,
+        this.taskManager,
+        this.settings,
+        startTaskModal.open.bind(startTaskModal),
+      ),
     );
 
     if(this.settings.showInStatusBar) this.startStatusBar();
