@@ -84,7 +84,10 @@ export class TaskManager {
 
       tasks[taskIdx].intervals.push([now, null]);
 
-      return { ...storeData, tasks, activeTask: taskIdx };
+      //move task to the top of the list:
+      tasks.unshift(tasks.splice(taskIdx, 1)[0]);
+
+      return { ...storeData, tasks, activeTask: 0 };
     });
   }
 
