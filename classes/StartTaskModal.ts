@@ -1,4 +1,4 @@
-import { App, Modal, Setting } from "obsidian";
+import { App, Modal, Setting, type KeymapEventHandler } from "obsidian";
 
 import type  TimeTracker  from "../main";
 
@@ -7,6 +7,7 @@ export class StartTaskModal extends Modal {
   onSubmit: (result: string) => void;
   onStopTimer: () => void;
   timeTracker: TimeTracker;
+  keymapEventHandler: KeymapEventHandler | null = null;
 
   constructor(timeTracker: TimeTracker, app: App, onSubmit: (result: string) => void, onStopTimer: () => void) {
     super(app);
@@ -23,14 +24,12 @@ export class StartTaskModal extends Modal {
     const nameInput = new Setting(contentEl)
       .setName("Name:");
 
-    nameInput.settingEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        if(this.result) {
-          this.onSubmit(this.result);
-        }
-        this.close();
+    this.keymapEventHandler = this.scope.register([], 'Enter', () => {
+      if(this.result) {
+        this.onSubmit(this.result);
+        this.close()
       }
-    });
+    })
 
     const buttons = new Setting(contentEl);
     if(this.timeTracker.taskManager.hasActiveTask()) {
@@ -47,8 +46,8 @@ export class StartTaskModal extends Modal {
         .setCta()
         .setDisabled(true)
         .onClick(() => {
-          this.close();
           this.onSubmit(this.result);
+          this.close();
         })
     );
 
@@ -63,5 +62,6 @@ export class StartTaskModal extends Modal {
   onClose() {
     const { contentEl } = this;
     contentEl.empty();
+    if(this.keymapEventHandler) this.scope.unregister(this.keymapEventHandler)
   }
 }
