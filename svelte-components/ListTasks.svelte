@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, createEventDispatcher } from "svelte";
   import dayjs from "dayjs";
-  import { Clock, TaskManager } from "../classes";
+  import { Clock, TaskManager, type Interval } from "../classes";
   import Icon from "./Icon.svelte";
 
   import type { TaskWithDuration } from "./EditTask.svelte";
@@ -16,16 +16,24 @@
   const store = taskManager.store;
 
   let tasksWithTimes: TaskWithDuration[];
-  $: tasksWithTimes = $store.tasks.map((task) => ({
-    ...task,
-    duration: dayjs.duration(TaskManager.sumTaskIntervals(task)),
-  }));
+  $: tasksWithTimes = $store.tasks
+    .map((task) => ({
+      ...task,
+      duration: dayjs.duration(TaskManager.sumTaskIntervals(task)),
+    }));
+
+  $: totalDuration = tasksWithTimes.reduce(
+    (acc, curr) => acc.add(curr.duration),
+    dayjs.duration(0),
+  );
 
   const clock = new Clock(() => {
     const task = tasksWithTimes[$store.activeTask];
+    const previousDuration = task.duration;
     task.duration = dayjs.duration(TaskManager.sumTaskIntervals(task));
 
     tasksWithTimes = [...tasksWithTimes];
+    totalDuration = totalDuration.add(task.duration.subtract(previousDuration));
   });
 
   $: {
@@ -42,7 +50,8 @@
 </script>
 
 <div>
-  <div class="new-task-button">
+  <div class="header">
+    <p>{taskManager.formatDuration(totalDuration)}</p>
     <button on:click={() => startTask()}>Start task</button>
   </div>
   {#if tasksWithTimes.length === 0}
@@ -116,9 +125,10 @@
   button {
     padding: var(--size-4-1);
   }
-  .new-task-button {
+  .header {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: var(--size-4-2);
   }
   .name {

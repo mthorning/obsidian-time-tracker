@@ -4,9 +4,13 @@ import dayjs from "dayjs";
 import type { Writable } from "svelte/store";
 import type TimeTracker  from "../main";
 
+export type ActiveInterval = [number, null];
+export type FinishedInterval = [number, number];
+export type Interval = ActiveInterval | FinishedInterval
+
 export type Task = {
   name: string;
-  intervals: [number, number | null][];
+  intervals: Interval[]; 
 }
 
 type StoreData = {

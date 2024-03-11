@@ -16,15 +16,15 @@ export class StartTaskModal extends Modal {
             if (e.key === "Enter") {
                 if (this.result) {
                     this.onSubmit(this.result);
-                    this.close();
                 }
+                this.close();
             }
         });
         const buttons = new Setting(contentEl);
         if (this.timeTracker.taskManager.hasActiveTask()) {
             buttons.addExtraButton((btn) => btn
                 .onClick(this.onStopTimer)
-                .extraSettingsEl.setText("Stop timer"));
+                .extraSettingsEl.setText("Stop active timer"));
         }
         buttons.addButton((btn) => btn
             .setButtonText("Start timer")

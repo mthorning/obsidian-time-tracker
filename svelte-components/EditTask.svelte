@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
   import { onDestroy, createEventDispatcher } from "svelte";
   import dayjs from "dayjs";
-  import { Clock, TaskManager, type Task } from "../classes";
+  import { Clock, TaskManager, type Task, type FinishedInterval } from "../classes";
   import IntervalEdit from "./IntervalEdit.svelte";
 
   export type TaskWithDuration = Task & {
@@ -99,8 +99,8 @@
       intervals: [
         ...(newIntervals.map(
           (interval) =>
-            interval.map((val) => dayjs(val).valueOf()) as [number, number],
-        ) as [number, number][]),
+            interval.map((val) => dayjs(val).valueOf()) as FinishedInterval,
+        ) as FinishedInterval[]),
         ...(newActiveInterval
           ? [[dayjs(newActiveInterval[0]).valueOf(), null] as [number, null]]
           : []),
