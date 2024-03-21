@@ -1,12 +1,16 @@
 <script lang="ts">
   import Icon from "./Icon.svelte";
 
-  export let interval: { start: string, end: string | null};
+  export let interval: { start: string, end: string | null, description: string};
   export let duration: string;
   export let deleteInterval: () => void = () => undefined
 </script>
 
 <div>
+  <label>
+    Description:
+    <input type="text" bind:value={interval.description} />
+  </label>
   <label>
     Start:
     <input type="datetime-local" step="1" bind:value={interval.start} />

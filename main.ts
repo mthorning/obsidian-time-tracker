@@ -29,8 +29,8 @@ export default class TimeTracker extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-    const onTaskStart = (name: string) => {
-      this.taskManager.startTask(name)
+    const onTaskStart = (value: { name: string, description?: string }) => {
+      this.taskManager.startTask(value)
       this.activateTaskListView();
     }
 

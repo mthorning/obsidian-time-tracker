@@ -5,7 +5,7 @@ import type { Writable } from "svelte/store";
 import type TimeTracker  from "../main";
 
 interface BaseInterval {
-  name?: string;
+  description?: string;
 }
 export interface ActiveInterval extends BaseInterval {
   start: number;
@@ -73,7 +73,10 @@ export class TaskManager {
     return duration.format(this.timeTracker.settings.taskListFormat);
   }
 
-  startTask(name: string) {
+  startTask({ name: utName, description: utDesc } : { name: string, description?: string }) {
+    const name = utName.trim();
+    const description = utDesc?.trim();
+
     const now = Date.now();
 
     this.store.update((storeData) => {
@@ -92,7 +95,16 @@ export class TaskManager {
         taskIdx = 0;
       }
 
-      tasks[taskIdx].intervals.push({ start: now, end: null });
+      const intervals = tasks[taskIdx].intervals;
+      intervals.push({
+        start: now,
+        end: null,
+        ...(description 
+          ? { description } 
+          : intervals[intervals.length - 1]?.description 
+            ? { description: intervals[intervals.length - 1].description }
+            : {})
+      });
 
       //move task to the top of the list:
       tasks.unshift(tasks.splice(taskIdx, 1)[0]);

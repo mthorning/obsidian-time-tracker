@@ -47,7 +47,7 @@
       return `${i === 0 ? totalsHeader : ''}${task.name} | ${taskManager.formatDuration(task.duration)}`
     })
 
-    const intervalsHeader = 'Start | End | Duration | Task\n--- | --- | --- | ---\n';
+    const intervalsHeader = 'Task | Start | End | Duration | Description\n--- | --- | --- | ---\n';
     const taskIntervals = tasksWithTimes
       .flatMap((task) => task.intervals
         .map((interval) => ({
@@ -55,14 +55,15 @@
           endTs: interval.end ?? Date.now(),
           duration: task.duration,
           taskName: task.name,
+          description: interval.description,
         }))
       )
       .sort((a, b) => a.startTs - b.startTs)
-      .map(({ startTs, endTs, taskName, duration }, i) => {
+      .map(({ startTs, endTs, taskName, duration, description }, i) => {
           const fmt = 'HH:mm:ss';
           const start = dayjs(startTs).format(fmt);
           const end = dayjs(endTs).format(fmt);
-          return `${i === 0 ? intervalsHeader : ''}${start} | ${end} | ${duration.format(fmt)} | ${taskName}`;
+          return `${i === 0 ? intervalsHeader : ''}${taskName} | ${start} | ${end} | ${duration.format(fmt)} | ${description}`;
       });
 
     navigator.clipboard.writeText([
@@ -104,7 +105,10 @@
     {#each tasksWithTimes as task}
       <li>
         <div class="main-li">
-          <span class="name">{task.name}</span>
+          <div class="data">
+            <h5 class="name">{task.name}</h5>
+            <p class="name">{task.intervals[task.intervals.length - 1]?.description ?? `Interval ${task.intervals.length}`}</p>
+          </div>
           <span>{taskManager.formatDuration(task.duration)}</span>
           {#if $store.tasks[$store.activeTask]?.name === task.name}
             <button
@@ -115,7 +119,7 @@
             </button>
           {:else}
             <button
-              on:click={() => taskManager.startTask(task.name)}
+              on:click={() => taskManager.startTask({ name: task.name })}
               class="start-button"
             >
               <Icon icon="play" />
@@ -179,9 +183,14 @@
     align-items: center;
     gap: var(--size-4-1);
   }
-  .name {
+  .data {
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .name {
     word-break: break-word;
+    margin: 0;
   }
   .stop-button :global(svg) {
     stroke: var(--text-error);

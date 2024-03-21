@@ -19,14 +19,14 @@
 
   const originalName = task.name;
   let originalIntervals = task.intervals.map((interval) => ({
-    ...interval,   
+    description: interval.description ?? '',
     start: dayjs(interval.start).millisecond(0),
     end: interval.end === null ? null : dayjs(interval.end).millisecond(0),
   }));
-  let originalActiveInterval: { start: Dayjs, end: null } | null = null;
+  let originalActiveInterval: { start: Dayjs, end: null, description: string } | null = null;
 
   if (originalIntervals[originalIntervals.length - 1]?.end === null) {
-    originalActiveInterval = originalIntervals.pop() as { start: Dayjs, end: null };
+    originalActiveInterval = originalIntervals.pop() as { start: Dayjs, end: null, description: string};
   }
 
   const originalTotalDurationForFinishedIntervals = originalIntervals.reduce(
@@ -43,8 +43,12 @@
 
   let originalTotalDuration = updateOriginalTotal();
 
-  let newActiveInterval: { start: string, end: null } | null = originalActiveInterval
-    ? { start: dayjs(originalActiveInterval.start).format("YYYY-MM-DDTHH:mm:ss"), end: null }
+  let newActiveInterval: { start: string, end: null, description: string } | null = originalActiveInterval
+    ? { 
+      start: dayjs(originalActiveInterval.start).format("YYYY-MM-DDTHH:mm:ss"),
+      end: null,
+      description: originalActiveInterval.description
+    }
     : null;
 
   $: newActiveIntervalDuration = updateNewActiveIntervalDuration();
@@ -56,6 +60,7 @@
 
   let newIntervals = originalIntervals.map(
     (interval) => ({
+      description: interval.description,
       start: interval.start.format("YYYY-MM-DDTHH:mm:ss"),
       end: interval.end!.format("YYYY-MM-DDTHH:mm:ss")
     })
@@ -100,11 +105,16 @@
       intervals: [
         ...(newIntervals.map(
           (interval) => ({
+            ...interval,
             start: dayjs(interval.start).valueOf(),
             end: dayjs(interval.end).valueOf(), 
         }))),
         ...(newActiveInterval
-          ? [{ start: dayjs(newActiveInterval.start).valueOf(), end: null }]
+          ? [{ 
+              ...newActiveInterval,
+              start: dayjs(newActiveInterval.start).valueOf(),
+              end: null 
+            }]
           : []),
       ],
     });
@@ -115,6 +125,7 @@
     newIntervals = [
       ...newIntervals,
       {
+        description: "",
         start: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
         end: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
       },
