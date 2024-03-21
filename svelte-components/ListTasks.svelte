@@ -4,6 +4,7 @@
   import { Clock, TaskManager, type Interval } from "../classes";
   import Icon from "./Icon.svelte";
 
+
   import type { TaskWithDuration } from "./EditTask.svelte";
 
   const dispatch = createEventDispatcher<{
@@ -36,6 +37,34 @@
     totalDuration = totalDuration.add(task.duration.subtract(previousDuration));
   });
 
+  const copy = () => {
+    //TODO: Add a toast message
+    navigator.clipboard.writeText([
+      "# Tasks",
+      '## Total times',
+      ...tasksWithTimes
+        .map((task) => `${task.name}: ${taskManager.formatDuration(task.duration)}`),
+      '## Intervals',
+      ...tasksWithTimes
+        .flatMap((task) => task.intervals
+          .map((interval) => ({
+            startTs: interval[0],
+            endTs: interval[1] ?? Date.now(),
+            duration: task.duration,
+            taskName: task.name,
+          })))
+        .sort((a, b) => a.startTs - b.startTs)
+        .map(({ startTs, endTs, taskName, duration }, i) => {
+            const fmt = 'HH:mm:ss';
+            const start = dayjs(startTs).format(fmt);
+            const end = dayjs(endTs).format(fmt);
+            const header = 'Start | End | Duration | Task\n--- | --- | --- | ---\n';
+            return `${i === 0 ? header : ''}${start} | ${end} | ${duration.format(fmt)} | ${taskName}`;
+          }),
+    ].join("\n"),
+    );
+  };
+
   $: {
     if ($store.activeTask !== -1) {
       clock.start();
@@ -52,7 +81,12 @@
 <div>
   <div class="header">
     <p>{taskManager.formatDuration(totalDuration)}</p>
+    <div>
+      <button on:click={copy}>
+        <Icon icon="copy" />
+      </button>
     <button on:click={() => startTask()}>Start task</button>
+</div>
   </div>
   {#if tasksWithTimes.length === 0}
     <p>No timers are running at the moment</p>
@@ -130,6 +164,11 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--size-4-2);
+  }
+  .header div {
+    display: flex;
+    align-items: center;
+    gap: var(--size-4-1);
   }
   .name {
     flex-grow: 1;
