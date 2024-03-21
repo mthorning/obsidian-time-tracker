@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, createEventDispatcher } from "svelte";
   import dayjs from "dayjs";
-  import { Clock, TaskManager, type Interval } from "../classes";
+  import { Clock, TaskManager } from "../classes";
   import Icon from "./Icon.svelte";
 
 
@@ -51,8 +51,8 @@
     const taskIntervals = tasksWithTimes
       .flatMap((task) => task.intervals
         .map((interval) => ({
-          startTs: interval[0],
-          endTs: interval[1] ?? Date.now(),
+          startTs: interval.start,
+          endTs: interval.end ?? Date.now(),
           duration: task.duration,
           taskName: task.name,
         }))

@@ -1,8 +1,7 @@
 <script lang="ts">
-  import dayjs from "dayjs";
   import Icon from "./Icon.svelte";
 
-  export let interval: [string, string | null];
+  export let interval: { start: string, end: string | null};
   export let duration: string;
   export let deleteInterval: () => void = () => undefined
 </script>
@@ -10,9 +9,9 @@
 <div>
   <label>
     Start:
-    <input type="datetime-local" step="1" bind:value={interval[0]} />
+    <input type="datetime-local" step="1" bind:value={interval.start} />
   </label>
-  {#if interval[1] === null}
+  {#if interval.end === null}
     <div class="still-running">
       <p>End:</p>
       <p>Still running...</p>
@@ -20,12 +19,12 @@
   {:else}
     <label>
       End:
-      <input type="datetime-local" step="1" bind:value={interval[1]} />
+      <input type="datetime-local" step="1" bind:value={interval.end} />
     </label>
   {/if}
   <div class="footer">
     <p>Duration: {duration}</p>
-    {#if interval[1] !== null}
+    {#if interval.end !== null}
       <button type="button" on:click={() => deleteInterval()}>
         <Icon icon="bin" />
       </button>

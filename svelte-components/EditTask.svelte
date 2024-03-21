@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
   import { onDestroy, createEventDispatcher } from "svelte";
-  import dayjs from "dayjs";
-  import { Clock, TaskManager, type Task, type FinishedInterval } from "../classes";
+  import dayjs, { type Dayjs } from "dayjs";
+  import { Clock, TaskManager, type Task } from "../classes";
   import IntervalEdit from "./IntervalEdit.svelte";
 
   export type TaskWithDuration = Task & {
@@ -18,50 +18,51 @@
   const { task, isActive } = taskToEdit;
 
   const originalName = task.name;
-  let originalIntervals = task.intervals.map((interval) =>
-    interval.map((val) => (val === null ? null : dayjs(val).millisecond(0))),
-  );
-  let originalActiveInterval: [number, null] | null = null;
+  let originalIntervals = task.intervals.map((interval) => ({
+    ...interval,   
+    start: dayjs(interval.start).millisecond(0),
+    end: interval.end === null ? null : dayjs(interval.end).millisecond(0),
+  }));
+  let originalActiveInterval: { start: Dayjs, end: null } | null = null;
 
-  if (originalIntervals[originalIntervals.length - 1]?.[1] === null) {
-    originalActiveInterval = originalIntervals.pop() as [number, null];
+  if (originalIntervals[originalIntervals.length - 1]?.end === null) {
+    originalActiveInterval = originalIntervals.pop() as { start: Dayjs, end: null };
   }
 
   const originalTotalDurationForFinishedIntervals = originalIntervals.reduce(
-    (acc, cur) => acc.add(cur[1]!.diff(cur[0])),
+    (acc, cur) => acc.add(cur.end!.diff(cur.start)),
     dayjs.duration(0),
   );
 
   const updateOriginalTotal = () =>
     originalTotalDurationForFinishedIntervals.add(
       originalActiveInterval
-        ? dayjs.duration(dayjs().diff(dayjs(originalActiveInterval[0])))
+        ? dayjs.duration(dayjs().diff(dayjs(originalActiveInterval.start)))
         : dayjs.duration(0),
     );
 
   let originalTotalDuration = updateOriginalTotal();
 
-  let newActiveInterval: [string, null] | null = originalActiveInterval
-    ? [dayjs(originalActiveInterval[0]).format("YYYY-MM-DDTHH:mm:ss"), null]
+  let newActiveInterval: { start: string, end: null } | null = originalActiveInterval
+    ? { start: dayjs(originalActiveInterval.start).format("YYYY-MM-DDTHH:mm:ss"), end: null }
     : null;
 
   $: newActiveIntervalDuration = updateNewActiveIntervalDuration();
 
   const updateNewActiveIntervalDuration = () =>
     newActiveInterval
-      ? dayjs.duration(dayjs().diff(newActiveInterval[0]))
+      ? dayjs.duration(dayjs().diff(newActiveInterval.start))
       : dayjs.duration(0);
 
   let newIntervals = originalIntervals.map(
-    (interval) =>
-      interval.map((val) => val!.format("YYYY-MM-DDTHH:mm:ss")) as [
-        string,
-        string,
-      ],
+    (interval) => ({
+      start: interval.start.format("YYYY-MM-DDTHH:mm:ss"),
+      end: interval.end!.format("YYYY-MM-DDTHH:mm:ss")
+    })
   );
 
   $: newIntervalDurations = newIntervals.map((interval) =>
-    dayjs.duration(dayjs(interval[1]).diff(dayjs(interval[0]))),
+    dayjs.duration(dayjs(interval.end).diff(dayjs(interval.start))),
   );
 
   $: newTotalDurationForFinishedIntervals = newIntervalDurations.reduce(
@@ -72,7 +73,7 @@
   const updateNewTotal = () =>
     newTotalDurationForFinishedIntervals.add(
       newActiveInterval
-        ? dayjs.duration(dayjs().diff(dayjs(newActiveInterval[0])))
+        ? dayjs.duration(dayjs().diff(dayjs(newActiveInterval.start)))
         : dayjs.duration(0),
     );
 
@@ -98,11 +99,12 @@
       name: task.name,
       intervals: [
         ...(newIntervals.map(
-          (interval) =>
-            interval.map((val) => dayjs(val).valueOf()) as FinishedInterval,
-        ) as FinishedInterval[]),
+          (interval) => ({
+            start: dayjs(interval.start).valueOf(),
+            end: dayjs(interval.end).valueOf(), 
+        }))),
         ...(newActiveInterval
-          ? [[dayjs(newActiveInterval[0]).valueOf(), null] as [number, null]]
+          ? [{ start: dayjs(newActiveInterval.start).valueOf(), end: null }]
           : []),
       ],
     });
@@ -112,10 +114,10 @@
   function addInterval() {
     newIntervals = [
       ...newIntervals,
-      [
-        dayjs().format("YYYY-MM-DDTHH:mm:ss"),
-        dayjs().format("YYYY-MM-DDTHH:mm:ss"),
-      ],
+      {
+        start: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
+        end: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
+      },
     ];
   }
 

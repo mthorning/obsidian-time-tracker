@@ -4,8 +4,18 @@ import dayjs from "dayjs";
 import type { Writable } from "svelte/store";
 import type TimeTracker  from "../main";
 
-export type ActiveInterval = [number, null];
-export type FinishedInterval = [number, number];
+interface BaseInterval {
+  name?: string;
+}
+export interface ActiveInterval extends BaseInterval {
+  start: number;
+  end: null;
+}
+export interface FinishedInterval extends BaseInterval {
+  start: number;
+  end: number;
+}
+
 export type Interval = ActiveInterval | FinishedInterval
 
 export type Task = {
@@ -41,9 +51,9 @@ export class TaskManager {
     });
   }
 
-  static sumTaskIntervals(task: { intervals: [number, number | null][] }): number {
+  static sumTaskIntervals(task: { intervals: { start: number, end: number | null }[] }): number {
     if(!task) return 0;
-    return task.intervals.reduce((acc, [start, end]) => {
+    return task.intervals.reduce((acc, { start, end }) => {
       return acc + ((end ?? Date.now()) - start);
     }, 0)
   }
@@ -82,7 +92,7 @@ export class TaskManager {
         taskIdx = 0;
       }
 
-      tasks[taskIdx].intervals.push([now, null]);
+      tasks[taskIdx].intervals.push({ start: now, end: null });
 
       //move task to the top of the list:
       tasks.unshift(tasks.splice(taskIdx, 1)[0]);
@@ -97,7 +107,7 @@ export class TaskManager {
       const newTasks = [...tasks];
 
       tasks[activeTask].intervals = tasks[activeTask].intervals.map(interval => {
-        if(!interval[1]) interval[1] = now;
+        if(!interval.end) interval.end = now;
         return interval;
       });
       return { ...storeData, tasks: newTasks};
