@@ -39,30 +39,39 @@
 
   const copy = () => {
     //TODO: Add a toast message
+
+    const totalsHeader = 'Task | Time\n--- | --- \n';
+
+    const taskTotals = tasksWithTimes
+      .map((task, i) => {
+      return `${i === 0 ? totalsHeader : ''}${task.name} | ${taskManager.formatDuration(task.duration)}`
+    })
+
+    const intervalsHeader = 'Start | End | Duration | Task\n--- | --- | --- | ---\n';
+    const taskIntervals = tasksWithTimes
+      .flatMap((task) => task.intervals
+        .map((interval) => ({
+          startTs: interval[0],
+          endTs: interval[1] ?? Date.now(),
+          duration: task.duration,
+          taskName: task.name,
+        }))
+      )
+      .sort((a, b) => a.startTs - b.startTs)
+      .map(({ startTs, endTs, taskName, duration }, i) => {
+          const fmt = 'HH:mm:ss';
+          const start = dayjs(startTs).format(fmt);
+          const end = dayjs(endTs).format(fmt);
+          return `${i === 0 ? intervalsHeader : ''}${start} | ${end} | ${duration.format(fmt)} | ${taskName}`;
+      });
+
     navigator.clipboard.writeText([
       "# Tasks",
-      '## Total times',
-      ...tasksWithTimes
-        .map((task) => `${task.name}: ${taskManager.formatDuration(task.duration)}`),
+      ...taskTotals,
+      `TOTAL | **${taskManager.formatDuration(totalDuration)}**`,
       '## Intervals',
-      ...tasksWithTimes
-        .flatMap((task) => task.intervals
-          .map((interval) => ({
-            startTs: interval[0],
-            endTs: interval[1] ?? Date.now(),
-            duration: task.duration,
-            taskName: task.name,
-          })))
-        .sort((a, b) => a.startTs - b.startTs)
-        .map(({ startTs, endTs, taskName, duration }, i) => {
-            const fmt = 'HH:mm:ss';
-            const start = dayjs(startTs).format(fmt);
-            const end = dayjs(endTs).format(fmt);
-            const header = 'Start | End | Duration | Task\n--- | --- | --- | ---\n';
-            return `${i === 0 ? header : ''}${start} | ${end} | ${duration.format(fmt)} | ${taskName}`;
-          }),
-    ].join("\n"),
-    );
+      ...taskIntervals,
+    ].join("\n"));
   };
 
   $: {
