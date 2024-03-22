@@ -53,17 +53,17 @@
         .map((interval) => ({
           startTs: interval.start,
           endTs: interval.end ?? Date.now(),
-          duration: task.duration,
           taskName: task.name,
           description: interval.description,
         }))
       )
       .sort((a, b) => a.startTs - b.startTs)
-      .map(({ startTs, endTs, taskName, duration, description }, i) => {
+      .map(({ startTs, endTs, taskName, description }, i) => {
           const fmt = 'HH:mm:ss';
           const start = dayjs(startTs).format(fmt);
           const end = dayjs(endTs).format(fmt);
-          return `${i === 0 ? intervalsHeader : ''}${taskName} | ${start} | ${end} | ${duration.format(fmt)} | ${description}`;
+          const duration = dayjs.duration(endTs - startTs).format(fmt);
+          return `${i === 0 ? intervalsHeader : ''}${taskName} | ${start} | ${end} | ${duration} | ${description}`;
       });
 
     navigator.clipboard.writeText([
@@ -72,7 +72,7 @@
       `TOTAL | **${taskManager.formatDuration(totalDuration)}**`,
       '## Intervals',
       ...taskIntervals,
-    ].join("\n"));
+    ].join("\n") + "\n");
   };
 
   $: {
