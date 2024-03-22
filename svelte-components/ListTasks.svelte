@@ -40,14 +40,14 @@
   const copy = () => {
     //TODO: Add a toast message
 
-    const totalsHeader = 'Task | Time\n--- | --- \n';
+    const totalsHeader = '| Task | Time |\n|---|---|\n';
 
     const taskTotals = tasksWithTimes
       .map((task, i) => {
-      return `${i === 0 ? totalsHeader : ''}${task.name} | ${taskManager.formatDuration(task.duration)}`
+      return `${i === 0 ? totalsHeader : ''}| ${task.name} | ${taskManager.formatDuration(task.duration)} |`
     })
 
-    const intervalsHeader = 'Task | Start | End | Duration | Description\n--- | --- | --- | ---\n';
+    const intervalsHeader = '| Task | Start | End | Duration | Description |\n|---|---|---|---|---|\n';
     const taskIntervals = tasksWithTimes
       .flatMap((task) => task.intervals
         .map((interval) => ({
@@ -63,13 +63,13 @@
           const start = dayjs(startTs).format(fmt);
           const end = dayjs(endTs).format(fmt);
           const duration = dayjs.duration(endTs - startTs).format(fmt);
-          return `${i === 0 ? intervalsHeader : ''}${taskName} | ${start} | ${end} | ${duration} | ${description}`;
+          return `${i === 0 ? intervalsHeader : ''}| ${taskName} | ${start} | ${end} | ${duration} | ${description} |`;
       });
 
     navigator.clipboard.writeText([
       "# Tasks",
       ...taskTotals,
-      `TOTAL | **${taskManager.formatDuration(totalDuration)}**`,
+      `| TOTAL | **${taskManager.formatDuration(totalDuration)}** |`,
       '## Intervals',
       ...taskIntervals,
     ].join("\n") + "\n");
