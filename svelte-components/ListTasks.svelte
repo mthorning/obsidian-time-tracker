@@ -105,43 +105,45 @@
     {#each tasksWithTimes as task}
       <li>
         <div class="main-li">
-          <div class="data">
+          <div class="left-side">
             <h4 class="name">{task.name}</h4>
             <p class="name">{task.intervals[task.intervals.length - 1]?.description ?? `Interval ${task.intervals.length}`}</p>
+            <div class="footer-buttons">
+              <button
+                on:click={() =>
+                  dispatch("editTask", {
+                    task,
+                    isActive: $store.tasks[$store.activeTask]?.name === task.name,
+                  })}>Edit</button
+              >
+              {#if $store.tasks[$store.activeTask]?.name !== task.name}
+                <button on:click={() => taskManager.resetTaskTimes(task.name)}
+                  >Reset</button
+                >
+                <button on:click={() => taskManager.deleteTask(task.name)}
+                  >Delete</button
+                >
+              {/if}
+            </div>
           </div>
-          <span>{taskManager.formatDuration(task.duration)}</span>
-          {#if $store.tasks[$store.activeTask]?.name === task.name}
-            <button
-              on:click={() => taskManager.stopActiveTask()}
-              class="stop-button"
-            >
-              <Icon icon="square" />
-            </button>
-          {:else}
-            <button
-              on:click={() => taskManager.startTask({ name: task.name })}
-              class="start-button"
-            >
-              <Icon icon="play" />
-            </button>
-          {/if}
-        </div>
-        <div class="footer-buttons">
-          <button
-            on:click={() =>
-              dispatch("editTask", {
-                task,
-                isActive: $store.tasks[$store.activeTask]?.name === task.name,
-              })}>Edit</button
-          >
-          {#if $store.tasks[$store.activeTask]?.name !== task.name}
-            <button on:click={() => taskManager.resetTaskTimes(task.name)}
-              >Reset</button
-            >
-            <button on:click={() => taskManager.deleteTask(task.name)}
-              >Delete</button
-            >
-          {/if}
+          <div class="right-side">
+            {#if $store.tasks[$store.activeTask]?.name === task.name}
+              <button
+                on:click={() => taskManager.stopActiveTask()}
+                class="stop-button"
+              >
+                <Icon icon="square" />
+              </button>
+            {:else}
+              <button
+                on:click={() => taskManager.startTask({ name: task.name })}
+                class="start-button"
+              >
+                <Icon icon="play" />
+              </button>
+            {/if}
+            <span>{taskManager.formatDuration(task.duration)}</span>
+          </div>
         </div>
       </li>
     {/each}
@@ -159,12 +161,11 @@
     margin-bottom: var(--size-4-4);
     border: var(--border-width) solid var(--background-modifier-border);
     border-radius: var(--radius-m);
-    padding: var(--size-4-4) var(--size-4-4) var(--size-4-8);
+    padding: var(--size-4-2) var(--size-4-4);
   }
 
   .main-li {
     display: flex;
-    flex-wrap: wrap;
     gap: var(--size-4-2);
     justify-content: space-between;
     align-items: center;
@@ -183,10 +184,16 @@
     align-items: center;
     gap: var(--size-4-1);
   }
-  .data {
+  .left-side {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+  }
+  .right-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--size-4-2);
   }
   .name {
     word-break: break-word;
@@ -201,9 +208,6 @@
   .footer-buttons {
     display: flex;
     gap: var(--size-4-2);
-    position: absolute;
-    bottom: 0;
-    left: var(--size-4-4);
   }
   .footer-buttons button {
     border: unset;
