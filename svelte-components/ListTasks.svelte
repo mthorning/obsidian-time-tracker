@@ -106,7 +106,7 @@
       <li>
         <div class="main-li">
           <div class="data">
-            <h5 class="name">{task.name}</h5>
+            <h4 class="name">{task.name}</h4>
             <p class="name">{task.intervals[task.intervals.length - 1]?.description ?? `Interval ${task.intervals.length}`}</p>
           </div>
           <span>{taskManager.formatDuration(task.duration)}</span>
