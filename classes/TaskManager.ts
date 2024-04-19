@@ -174,4 +174,21 @@ export class TaskManager {
       return { ...storeData, tasks: newTasks };
     });
   }
+
+  changeCurrentTaskIntervalDescription(description: string) {
+    this.store.update(storeData => {
+      const { tasks, activeTask } = storeData;
+      if(activeTask === -1) return storeData;
+
+      const newTasks = [...tasks];
+      const activeTaskIntervals = newTasks[activeTask].intervals;
+      const activeInterval = activeTaskIntervals.find(interval => !interval.end);
+
+      if(activeInterval) {
+        activeInterval.description = description;
+      }
+
+      return { ...storeData, tasks: newTasks };
+    });
+  }
 }

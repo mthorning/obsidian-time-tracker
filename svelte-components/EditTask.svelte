@@ -146,56 +146,60 @@
   });
 </script>
 
-<div>
-  <button on:click={() => dispatch("closeEdit")}>Back</button>
-  <form on:submit|preventDefault>
-    <label for="name"
-      >Name:
-      <input name="name" type="text" bind:value={task.name} />
-    </label>
-    <hr />
-    {#each newIntervals as interval, i}
-      <IntervalEdit
-        duration={taskManager.formatDuration(newIntervalDurations[i])}
-        bind:interval
-        deleteInterval={deleteInterval(i)}
-      />
-    {/each}
-    <div class="add-button">
-      <button on:click={addInterval}>Add</button>
+<div class="container">
+  <div class="buttons">
+    <button on:click={() => dispatch("closeEdit")}>Back</button>
+    <button on:click={addInterval}>Add</button>
+  </div>
+  <form on:submit|preventDefault={onSubmit}>
+    <div class="scroll-box">
+      <label class="spacing border" for="name"
+        >Name:
+        <input name="name" type="text" bind:value={task.name} />
+      </label>
+      {#each newIntervals as interval, i}
+        <div class="border spacing">
+          <IntervalEdit
+            duration={taskManager.formatDuration(newIntervalDurations[i])}
+            bind:interval
+            deleteInterval={deleteInterval(i)}
+          />
+      </div>
+      {/each}
+      {#if newActiveInterval}
+        <div class="spacing">
+          <IntervalEdit
+            duration={taskManager.formatDuration(newActiveIntervalDuration)}
+            bind:interval={newActiveInterval}
+          />
+        </div>
+      {/if}
     </div>
-    <hr />
-    {#if newActiveInterval}
-      <IntervalEdit
-        duration={taskManager.formatDuration(newActiveIntervalDuration)}
-        bind:interval={newActiveInterval}
-      />
-    {/if}
-    {#if showDurationDiff}
-      <p>
-        Previous duration: {taskManager.formatDuration(originalTotalDuration)}
-      </p>
-      <p>
-        New duration: {taskManager.formatDuration(newTotalDuration)}
-      </p>
-    {:else}
-      <p>
-        Duration: {taskManager.formatDuration(newTotalDuration)}
-      </p>
-    {/if}
-    <div class="buttons">
-      <button type="button" on:click={() => dispatch("closeEdit")}
-        >Cancel</button
-      >
-      <button type="button" class="submit" on:click={onSubmit}>Save</button>
+    <div class="bottom-controls">
+      {#if showDurationDiff}
+        <p>
+          Previous total duration: {taskManager.formatDuration(originalTotalDuration)}
+        </p>
+        <p>
+          New total duration: {taskManager.formatDuration(newTotalDuration)}
+        </p>
+      {:else}
+        <p>
+          Total duration: {taskManager.formatDuration(newTotalDuration)}
+        </p>
+      {/if}
+      <button type="submit" class="submit">Save</button>
     </div>
   </form>
 </div>
 
 <style>
+  .container {
+    margin-right: -16px;
+  }
   form {
-    padding: var(--size-4-2) var(--size-4-1);
-    margin: var(--size-4-12) auto;
+    padding: var(--size-4-8) var(--size-4-2) var(--size-4-1);
+    margin: auto;
   }
   label {
     width: 100%;
@@ -205,23 +209,35 @@
     flex-wrap: wrap;
     margin-bottom: var(--size-4-2);
   }
+  .scroll-box {
+    padding-right: 16px;
+    max-height: calc(100vh - 260px);
+    overflow-y: auto;
+  }
+  .bottom-controls {
+    border-top: var(--border-width) solid var(--background-modifier-border);
+  }
   input {
     margin-left: var(--size-4-1);
   }
   .buttons {
+    padding-bottom: var(--size-4-4);
+    margin-right: 16px;
+    border-bottom: var(--border-width) solid var(--background-modifier-border);
     display: flex;
     gap: var(--size-4-2);
-    justify-content: flex-end;
   }
   button {
     border-radius: var(--button-radius);
   }
-  .add-button {
-    display: flex;
-    justify-content: center;
-    margin-bottom: var(--size-4-8);
-  }
   button.submit {
     float: right;
+  }
+  .spacing {
+    padding-bottom: var(--size-4-8);
+    margin-bottom: var(--size-4-8);
+  }
+  .border {
+    border-bottom: var(--border-width) solid var(--background-modifier-border);
   }
 </style>

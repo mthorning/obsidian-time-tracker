@@ -27,14 +27,13 @@
     </label>
   {/if}
   <div class="footer">
-    <p>Duration: {duration}</p>
+    <p class="p">Duration: {duration}</p>
     {#if interval.end !== null}
       <button type="button" on:click={() => deleteInterval()}>
         <Icon icon="bin" />
       </button>
     {/if}
   </div>
-  <hr />
 </div>
 
 <style>
@@ -46,6 +45,9 @@
     align-items: baseline;
     flex-wrap: wrap;
     margin-bottom: var(--size-4-2);
+  }
+  .p {
+    margin: 0;
   }
   .footer {
     padding: var(--size-4-1);

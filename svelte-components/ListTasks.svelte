@@ -6,6 +6,7 @@
 
 
   import type { TaskWithDuration } from "./EditTask.svelte";
+  import type { ChangeEventHandler } from "svelte/elements";
 
   const dispatch = createEventDispatcher<{
     editTask: { task: TaskWithDuration; isActive: boolean };
@@ -75,6 +76,21 @@
     ].join("\n") + "\n");
   };
 
+  const getDescriptions = (intervals: TaskWithDuration["intervals"]) => {
+    return Array.from(new Set(
+      intervals
+        .map((interval) => interval.description)
+        .filter((description) => description !== undefined)
+    ));
+  };
+
+  const changeTaskIntervalDescription: ChangeEventHandler<HTMLInputElement> = (e) => {
+    const value = e.target && (e.target as HTMLInputElement).value;
+    if(value) {
+      taskManager.changeCurrentTaskIntervalDescription(value);
+    }
+  };
+
   $: {
     if ($store.activeTask !== -1) {
       clock.start();
@@ -107,7 +123,20 @@
         <div class="main-li">
           <div class="left-side">
             <h4 class="name">{task.name}</h4>
-            <p class="name">{task.intervals[task.intervals.length - 1]?.description ?? `Interval ${task.intervals.length}`}</p>
+            {#if $store.tasks[$store.activeTask]?.name === task.name}
+              <input
+                value={task.intervals[task.intervals.length - 1].description ?? ''}
+                on:change={changeTaskIntervalDescription}
+                list="intervals" 
+              />
+              <datalist id="intervals">
+                {#each getDescriptions(task.intervals) as description}
+                  <option value={description}>{description}</option>
+                {/each}
+              </datalist>
+            {:else}
+              <p class="no-margin">{task.intervals[task.intervals.length - 1].description ?? ''}</p>
+            {/if}
             <div class="footer-buttons">
               <button
                 on:click={() =>
@@ -142,7 +171,7 @@
                 <Icon icon="play" />
               </button>
             {/if}
-            <span>{taskManager.formatDuration(task.duration)}</span>
+            <span class="timer">{taskManager.formatDuration(task.duration)}</span>
           </div>
         </div>
       </li>
@@ -187,6 +216,7 @@
   .left-side {
     flex-grow: 1;
     display: flex;
+    gap: var(--size-4-2);
     flex-direction: column;
   }
   .right-side {
@@ -205,6 +235,9 @@
   .start-button :global(svg) {
     stroke: var(--text-success);
   }
+  .timer {
+    width: 65px;
+  }
   .footer-buttons {
     display: flex;
     gap: var(--size-4-2);
@@ -217,5 +250,8 @@
     cursor: var(--cursor-link);
     text-decoration: underline;
     padding: 0;
+  }
+  .no-margin {
+    margin: 0;
   }
 </style>
