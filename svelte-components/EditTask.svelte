@@ -174,21 +174,21 @@
           />
         </div>
       {/if}
-    </div>
-    <div class="bottom-controls">
-      {#if showDurationDiff}
-        <p>
-          Previous total duration: {taskManager.formatDuration(originalTotalDuration)}
-        </p>
-        <p>
-          New total duration: {taskManager.formatDuration(newTotalDuration)}
-        </p>
-      {:else}
-        <p>
-          Total duration: {taskManager.formatDuration(newTotalDuration)}
-        </p>
-      {/if}
-      <button type="submit" class="submit">Save</button>
+      <div class="bottom-controls">
+        {#if showDurationDiff}
+          <p>
+            Previous total duration: {taskManager.formatDuration(originalTotalDuration)}
+          </p>
+          <p>
+            New total duration: {taskManager.formatDuration(newTotalDuration)}
+          </p>
+        {:else}
+          <p>
+            Total duration: {taskManager.formatDuration(newTotalDuration)}
+          </p>
+        {/if}
+        <button type="submit" class="submit">Save</button>
+      </div>
     </div>
   </form>
 </div>
@@ -216,6 +216,7 @@
   }
   .bottom-controls {
     border-top: var(--border-width) solid var(--background-modifier-border);
+    margin-bottom: var(--size-4-16);
   }
   input {
     margin-left: var(--size-4-1);
