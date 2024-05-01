@@ -31,7 +31,7 @@
 
   const clock = new Clock(() => {
     const task = tasksWithTimes[$store.activeTask];
-    const previousDuration = task.duration;
+    const previousDuration = task.duration ?? dayjs.duration(0);
     task.duration = dayjs.duration(TaskManager.sumTaskIntervals(task));
 
     tasksWithTimes = [...tasksWithTimes];
