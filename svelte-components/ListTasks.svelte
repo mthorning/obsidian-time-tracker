@@ -135,7 +135,7 @@
                 {/each}
               </datalist>
             {:else}
-              <p class="no-margin">{task.intervals[task.intervals.length - 1].description ?? ''}</p>
+              <p class="no-margin">{task.intervals[task.intervals.length - 1]?.description ?? ''}</p>
             {/if}
             <div class="footer-buttons">
               <button
