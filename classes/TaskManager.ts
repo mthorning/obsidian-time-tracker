@@ -2,7 +2,7 @@ import { writable, get } from "svelte/store";
 import dayjs from "dayjs";
 
 import type { Writable } from "svelte/store";
-import type TimeTracker  from "../main";
+import type TimeTracker from "../main";
 
 interface BaseInterval {
   description?: string;
@@ -16,17 +16,18 @@ export interface FinishedInterval extends BaseInterval {
   end: number;
 }
 
-export type Interval = ActiveInterval | FinishedInterval
+export type Interval = ActiveInterval | FinishedInterval;
 
 export type Task = {
   name: string;
-  intervals: Interval[]; 
-}
+  intervals: Interval[];
+  history: string[]; // Add history array to each task
+};
 
 type StoreData = {
   activeTask: number;
   tasks: Task[];
-}
+};
 export class TaskManager {
   store: Writable<StoreData> = writable({
     activeTask: -1,
@@ -43,37 +44,51 @@ export class TaskManager {
     const data = await this.timeTracker.loadData();
     this.store.set({
       activeTask: data?.activeTask ?? -1,
-      tasks: data?.tasks ?? [],
+      tasks: (data?.tasks ?? []).map((task: Task) => ({
+        ...task,
+        history: task.history || [],
+      })),
     });
 
-    this.store.subscribe(({ tasks, activeTask }) => {
-      this.timeTracker.saveData({...this.timeTracker.settings, tasks, activeTask });
+    this.store.subscribe((storeData) => {
+      this.timeTracker.saveData({
+        ...this.timeTracker.settings,
+        ...storeData,
+      });
     });
   }
 
-  static sumTaskIntervals(task: { intervals: { start: number, end: number | null }[] }): number {
-    if(!task) return 0;
+  static sumTaskIntervals(task: {
+    intervals: { start: number; end: number | null }[];
+  }): number {
+    if (!task) return 0;
     return task.intervals.reduce((acc, { start, end }) => {
       return acc + ((end ?? Date.now()) - start);
-    }, 0)
+    }, 0);
   }
 
   formatDuration(duration: ReturnType<typeof dayjs.duration>): string {
     let days = duration.asDays();
-    let plusOrMinus = '+'
-    if(days < 0) plusOrMinus = '-';
+    let plusOrMinus = "+";
+    if (days < 0) plusOrMinus = "-";
     days = Math.floor(Math.abs(days));
 
-    if(days >= 1) {
-    return `(${plusOrMinus}${days} day${days === 1 ? "" : "s"}) ${duration
-      .subtract(days, "d")
-      .format(this.timeTracker.settings.taskListFormat)}`;
+    if (days >= 1) {
+      return `(${plusOrMinus}${days} day${days === 1 ? "" : "s"}) ${duration
+        .subtract(days, "d")
+        .format(this.timeTracker.settings.taskListFormat)}`;
     }
 
     return duration.format(this.timeTracker.settings.taskListFormat);
   }
 
-  startTask({ name: utName, description: utDesc } : { name: string, description?: string }) {
+  startTask({
+    name: utName,
+    description: utDesc,
+  }: {
+    name: string;
+    description?: string;
+  }) {
     const name = utName.trim();
     const description = utDesc?.trim();
 
@@ -82,28 +97,37 @@ export class TaskManager {
     this.store.update((storeData) => {
       const { tasks: prevTasks, activeTask } = storeData;
       let tasks = [...prevTasks];
-      let taskIdx = tasks.findIndex(t => t.name === name);
+      let taskIdx = tasks.findIndex((t) => t.name === name);
 
-      if(activeTask !== -1) {
-        if(taskIdx === activeTask) return storeData;
+      if (activeTask !== -1) {
+        if (taskIdx === activeTask) return storeData;
         tasks = this.recordActiveTaskEndTime({ tasks, activeTask }, now).tasks;
-      } 
+      }
 
-      if(taskIdx === -1) {
-        const newTask = {name,  intervals: []};
+      if (taskIdx === -1) {
+        const newTask = {
+          name,
+          intervals: [],
+          history: [],
+        };
         tasks = [newTask, ...tasks];
         taskIdx = 0;
+      }
+
+      // Add description to history if provided
+      if (description) {
+        this.addToTaskHistory(tasks[taskIdx], description);
       }
 
       const intervals = tasks[taskIdx].intervals;
       intervals.push({
         start: now,
         end: null,
-        ...(description 
-          ? { description } 
-          : intervals[intervals.length - 1]?.description 
+        ...(description
+          ? { description }
+          : intervals[intervals.length - 1]?.description
             ? { description: intervals[intervals.length - 1].description }
-            : {})
+            : {}),
       });
 
       //move task to the top of the list:
@@ -113,29 +137,48 @@ export class TaskManager {
     });
   }
 
-  recordActiveTaskEndTime( storeData: StoreData, now: number = Date.now()): StoreData  {
-      const { tasks, activeTask } = storeData;
-      if(activeTask === -1) return storeData;
-      const newTasks = [...tasks];
+  private addToTaskHistory(task: Task, description: string) {
+    if (!description) return;
 
-      tasks[activeTask].intervals = tasks[activeTask].intervals.map(interval => {
-        if(!interval.end) interval.end = now;
+    const index = task.history.indexOf(description);
+    if (index > -1) {
+      task.history.splice(index, 1);
+    }
+
+    task.history.unshift(description);
+    if (task.history.length > 5) {
+      task.history.pop();
+    }
+  }
+
+  recordActiveTaskEndTime(
+    storeData: StoreData,
+    now: number = Date.now()
+  ): StoreData {
+    const { tasks, activeTask } = storeData;
+    if (activeTask === -1) return storeData;
+    const newTasks = [...tasks];
+
+    tasks[activeTask].intervals = tasks[activeTask].intervals.map(
+      (interval) => {
+        if (!interval.end) interval.end = now;
         return interval;
-      });
-      return { ...storeData, tasks: newTasks};
+      }
+    );
+    return { ...storeData, tasks: newTasks };
   }
 
   stopActiveTask(): string | undefined {
     let name: string | undefined;
 
-    this.store.update(storeData => {
+    this.store.update((storeData) => {
       const { activeTask } = storeData;
-      if(activeTask === -1) return storeData;
+      if (activeTask === -1) return storeData;
 
       const { tasks } = this.recordActiveTaskEndTime(storeData);
       name = tasks[activeTask].name;
 
-      return {...storeData, activeTask: -1};
+      return { ...storeData, activeTask: -1 };
     });
 
     return name;
@@ -151,41 +194,50 @@ export class TaskManager {
   }
 
   resetTaskTimes(name: string) {
-    this.store.update(storeData => ({
+    this.store.update((storeData) => ({
       ...storeData,
-      tasks: storeData.tasks.map(task => task.name === name ? {...task, intervals: []} : task)
-    }))
+      tasks: storeData.tasks.map((task) =>
+        task.name === name
+          ? { ...task, intervals: [] } // Keep the history array, only reset intervals
+          : task
+      ),
+    }));
   }
 
   deleteTask(name: string) {
-    this.store.update(storeData => ({
+    this.store.update((storeData) => ({
       ...storeData,
-      tasks: storeData.tasks.filter(task => task.name !== name)
+      tasks: storeData.tasks.filter((task) => task.name !== name),
     }));
   }
 
   updateTask(oldName: string, newTask: Partial<Task>) {
-    this.store.update(storeData => {
+    this.store.update((storeData) => {
       const { tasks } = storeData;
       const newTasks = [...tasks];
 
-      const idx = tasks.findIndex(task => task.name === oldName);
-      newTasks[idx] = {...tasks[idx], ...newTask};
+      const idx = tasks.findIndex((task) => task.name === oldName);
+      newTasks[idx] = { ...tasks[idx], ...newTask };
       return { ...storeData, tasks: newTasks };
     });
   }
 
   changeCurrentTaskIntervalDescription(description: string) {
-    this.store.update(storeData => {
+    this.store.update((storeData) => {
       const { tasks, activeTask } = storeData;
-      if(activeTask === -1) return storeData;
+      if (activeTask === -1) return storeData;
 
       const newTasks = [...tasks];
-      const activeTaskIntervals = newTasks[activeTask].intervals;
-      const activeInterval = activeTaskIntervals.find(interval => !interval.end);
+      const activeTaskObj = newTasks[activeTask];
+      const activeTaskIntervals = activeTaskObj.intervals;
+      const activeInterval = activeTaskIntervals.find(
+        (interval) => !interval.end
+      );
 
-      if(activeInterval) {
+      if (activeInterval) {
         activeInterval.description = description;
+        // Add to history when changing description
+        this.addToTaskHistory(activeTaskObj, description);
       }
 
       return { ...storeData, tasks: newTasks };

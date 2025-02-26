@@ -76,9 +76,15 @@
     ].join("\n") + "\n");
   };
 
-  const getDescriptions = (intervals: TaskWithDuration["intervals"]) => {
+  const getDescriptions = (task: TaskWithDuration) => {
+    // Use the history array if available, otherwise fall back to the old method
+    if (task.history && task.history.length > 0) {
+      return task.history;
+    }
+
+    // Legacy fallback
     return Array.from(new Set(
-      intervals
+      task.intervals
         .map((interval) => interval.description)
         .filter((description) => description !== undefined)
     ));
@@ -130,7 +136,7 @@
                 list="intervals" 
               />
               <datalist id="intervals">
-                {#each getDescriptions(task.intervals) as description}
+                {#each getDescriptions(task) as description}
                   <option value={description}>{description}</option>
                 {/each}
               </datalist>
