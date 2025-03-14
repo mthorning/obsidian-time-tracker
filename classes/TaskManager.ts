@@ -139,14 +139,18 @@ export class TaskManager {
 
   private addToTaskHistory(task: Task, description: string) {
     if (!description) return;
-
+    
+    // Remove if already exists (to avoid duplicates)
     const index = task.history.indexOf(description);
     if (index > -1) {
       task.history.splice(index, 1);
     }
-
+    
+    // Add to front of array
     task.history.unshift(description);
-    if (task.history.length > 5) {
+    
+    // Strictly limit to 5 items
+    while (task.history.length > 5) {
       task.history.pop();
     }
   }
