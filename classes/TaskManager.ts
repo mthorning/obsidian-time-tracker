@@ -123,11 +123,7 @@ export class TaskManager {
       intervals.push({
         start: now,
         end: null,
-        ...(description
-          ? { description }
-          : intervals[intervals.length - 1]?.description
-            ? { description: intervals[intervals.length - 1].description }
-            : {}),
+        ...(description ? { description } : {}),
       });
 
       //move task to the top of the list:
